@@ -67,6 +67,15 @@ case class Function(argument: Var, body: Expression) extends Expression {
   def boundVars: Set[Var] = body.boundVars + argument
 
   override def toString: String = String.format("λ%s.%s", argument, body)
+
+  /**
+   * `equals` is overriden here to capture alpha-equivalence.
+   */
+  override def equals(other: Any): Boolean = other match {
+    case Function(a, b) =>
+      (a == argument && b == body) || body == b.substitute(a, argument)
+    case _ => false
+  }
 }
 
 case class Application(function: Expression, argument: Expression) extends Expression {
