@@ -42,10 +42,15 @@ case class Application(function: Expression, argument: Expression) extends Expre
 
 class LambdaParsers extends RegexParsers {
   def expression: Parser[Expression] = (
+      application
+    | simpleExpression
+  )
+
+  def simpleExpression: Parser[Expression] = (
       function
     | identifier
+    | constant
     | "("~>expression<~")"
-    | application
   )
 
   def function: Parser[Expression] =
@@ -53,16 +58,18 @@ class LambdaParsers extends RegexParsers {
       case args~"."~exp => (args :\ exp) { Function(_, _) }
     }
 
-  def application: Parser[Application] =
-    expression~expression ^^ {
-      case func~arg => Application(func, arg)
+  def application: Parser[Expression] =
+    simpleExpression~rep1(simpleExpression) ^^ {
+      case exp~exps => (exp /: exps) { (app, e) => Application(app, e) }
     }
 
   def arguments: Parser[List[Var]] = rep1(identifier)
 
   def lambda: Parser[String] = """\\|λ""".r
 
-  def identifier: Parser[Var] = """[a-z]|[A-Z0-9+\-*/]+""".r ^^ { Var(_) }
+  def identifier: Parser[Var] = """[a-z]""".r ^^ { Var(_) }
+
+  def constant: Parser[Var] = """[A-Z0-9+\-*/]+""".r ^^ { Var(_) }
 }
 
 object Expression extends LambdaParsers {
