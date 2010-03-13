@@ -27,7 +27,11 @@ sealed abstract class Expression {
     case _ => this
   }
 
-  //def etaConversion: Expression
+  def etaConversion: Expression = this match {
+    case Function(x, Application(f, y)) if x == y =>
+      if (f.freeVars contains x) this else f
+    case _ => this
+  }
 }
 
 case class Var(name: String) extends Expression {
