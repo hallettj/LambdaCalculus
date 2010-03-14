@@ -21,9 +21,9 @@ sealed abstract class Expression {
                   b alphaConversion conflicting)
   }
 
-  def betaConversion: Expression = this match {
+  def betaReduction: Expression = this match {
     case Application(Function(arg, body), b) => body.substitute(arg, b)
-    case Application(a, b) => Application(a.betaConversion, b)
+    case Application(a, b) => Application(a.betaReduction, b)
     case _ => this
   }
 
@@ -32,6 +32,19 @@ sealed abstract class Expression {
       if (f.freeVars contains x) this else f
     case _ => this
   }
+
+  def evaluate(callback: Expression => Unit): Expression = {
+    callback(this)
+    val beta = this.betaReduction
+    if (beta != this)
+      beta.evaluate(callback)
+    else {
+      val eta = this.etaConversion
+      if (eta != this) callback(eta)
+      eta
+    }
+  }
+  def evaluate: Expression = evaluate { e => () }
 }
 
 case class Var(name: String) extends Expression {
@@ -131,7 +144,9 @@ class LambdaParsers extends RegexParsers {
 
   def variable: Parser[Var] = """[a-z]'*""".r ^^ { Var(_) }
 
-  def constant: Parser[Var] = """[^a-z\\λ\(\)\s\.']+""".r ^^ { Var(_) }
+  def constant: Parser[Expression] = """[^a-z\\λ\(\)\s\.']+""".r ^^ {
+    case name => Expression(Expression.sources(name))
+  }
 }
 
 object Expression extends LambdaParsers {
@@ -140,4 +155,24 @@ object Expression extends LambdaParsers {
       case Success(e, _) => e
     }
   }
+
+  lazy val constants = sources transform { (name, src) => Expression(src) }
+
+  private[lambdacalculus] val sources = Map(
+    "0"     -> "λfx.x",
+    "1"     -> "λfx.f x",
+    "2"     -> "λfx.f (f x)",
+    "3"     -> "λfx.f (f (f x))",
+    "SUCC"  -> "λnfx.f (n f x)",
+    "+"     -> "λmnfx.m f (n f x)",
+    "*"     -> "λmn.m (+ n) 0",
+    "^"     -> "λbe.e b",  // exponentiation
+    "PRED"  -> "λnfx.n (λgh.h (g f)) (λu.x) (λu.u)",
+    "-"     -> "λmn.n PRED m",
+    "TRUE"  -> "λxy.x",
+    "FALSE" -> "λxy.y",
+    "&&"    -> "λpq.p q p",
+    "||"    -> "λpq.p p q",
+    "!"     -> "λpab.p b a"  // negation
+  )
 }
