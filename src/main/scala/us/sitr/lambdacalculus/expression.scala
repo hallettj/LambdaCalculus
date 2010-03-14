@@ -157,6 +157,13 @@ class LambdaParsers extends RegexParsers {
 }
 
 object Expression extends LambdaParsers {
+  def main(args: Array[String]) {
+    for (arg <- args) {
+      val exp = Expression(arg)
+      exp evaluate { println(_) }
+    }
+  }
+
   def apply(input: String): Expression = {
     (parseAll(expression, input): @unchecked) match {
       case Success(e, _) => e
