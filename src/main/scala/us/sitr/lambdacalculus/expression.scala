@@ -23,7 +23,14 @@ sealed abstract class Expression {
 
   def betaReduction: Expression = this match {
     case Application(Function(arg, body), b) => body.substitute(arg, b)
-    case Application(a, b) => Application(a.betaReduction, b)
+    case Application(a, b) => {
+      val left = Application(a.betaReduction, b)
+      if (left != this)
+        left
+      else
+        Application(a, b.betaReduction)
+    }
+    case Function(arg, body) => Function(arg, body.betaReduction)
     case _ => this
   }
 
