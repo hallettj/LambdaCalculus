@@ -89,6 +89,22 @@ Here is the complete list of constants available:
     "!"     -> "λpab.p b a"  // negation
 
 
+Why should you care?
+---------------------
+
+Maybe you are a lambda calculus fan; or maybe you just have some compsci
+homework to do.  Evaluating lambda calculus expressions with a computer is a
+lot less tedious than doing so by hand.
+
+On the other hand, maybe you are a Scala fan.  Part of the reason I wrote this
+program was to get some practice with Scala's parser combinator library.  You
+can use the code here as an example if you are also interested in parsing with
+Scala.
+
+To learn more about Scala's parsing libraries I recommend reading chapter 31 in
+Odersky's Programming in Scala.
+
+
 License
 --------
 
